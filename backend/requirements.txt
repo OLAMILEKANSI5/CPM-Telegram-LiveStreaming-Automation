@@ -1,6 +1,6 @@
 pyrogram==2.0.106
 tgcrypto==1.2.5
-py-tgcalls==2.1.2
+py-tgcalls==2.2.11
 psycopg[binary]==3.2.3
 apscheduler==3.10.4
 fastapi==0.115.0
