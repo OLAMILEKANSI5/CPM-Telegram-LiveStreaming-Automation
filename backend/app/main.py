@@ -6,9 +6,14 @@ from .config import settings
 
 
 async def _run():
+    print("Initializing database...")
+    await db.initialize_database()
+    print("Database OK")
     await tg.init_clients()
     await db.add_log("info", "system", "Prayer broadcast backend started")
 
+
+    
     sched_task = asyncio.create_task(scheduler.scheduler_loop())
 
     config = uvicorn.Config(app, host="0.0.0.0", port=settings.BACKEND_PORT, log_level="info")
