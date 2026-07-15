@@ -106,3 +106,83 @@ async def get_last_history_started_today(schedule_id: int):
             (schedule_id,),
         )
         return await cur.fetchone()
+
+
+async def initialize_database():
+    async with await get_conn() as conn:
+
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS telegram_config (
+            id SERIAL PRIMARY KEY,
+            api_id TEXT,
+            api_hash TEXT,
+            phone_number TEXT,
+            session_string TEXT,
+            connected BOOLEAN DEFAULT FALSE,
+            last_connected_at TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT now()
+        );
+        """)
+
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS logs (
+            id SERIAL PRIMARY KEY,
+            level TEXT,
+            category TEXT,
+            message TEXT,
+            details TEXT,
+            timestamp TIMESTAMP DEFAULT now()
+        );
+        """)
+
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS audios (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            file_path TEXT,
+            is_default BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT now()
+        );
+        """)
+
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS schedules (
+            id SERIAL PRIMARY KEY,
+            title TEXT,
+            start_time TIME,
+            end_time TIME,
+            audio_id INTEGER,
+            enabled BOOLEAN DEFAULT TRUE
+        );
+        """)
+
+        await conn.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id SERIAL PRIMARY KEY,
+            schedule_id INTEGER,
+            audio_id INTEGER,
+            audio_name TEXT,
+            started_at TIMESTAMP,
+            ended_at TIMESTAMP,
+            status TEXT,
+            duration_seconds DOUBLE PRECISION,
+            error_message TEXT,
+            telegram_log TEXT,
+            triggered_by TEXT
+        );
+        """)
+
+        cur = await conn.execute(
+            "SELECT COUNT(*) AS total FROM telegram_config"
+        )
+
+        row = await cur.fetchone()
+
+        if row["total"] == 0:
+            await conn.execute("""
+                INSERT INTO telegram_config
+                (connected)
+                VALUES (FALSE)
+            """)
+
+        await conn.commit()
