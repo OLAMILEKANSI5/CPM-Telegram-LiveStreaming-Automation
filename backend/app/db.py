@@ -22,28 +22,28 @@ async def add_log(level: str, category: str, message: str, details: str | None =
 # ---------- telegram_config ----------
 async def get_telegram_config():
     async with await get_conn() as conn:
-        cur = await conn.execute("SELECT * FROM telegram_config LIMIT 1")
+
+        cur = await conn.execute(
+            "SELECT * FROM telegram_config LIMIT 1"
+        )
+
+        row = await cur.fetchone()
+
+        if row:
+            return row
+
+        await conn.execute("""
+            INSERT INTO telegram_config (connected)
+            VALUES(FALSE)
+        """)
+
+        await conn.commit()
+
+        cur = await conn.execute(
+            "SELECT * FROM telegram_config LIMIT 1"
+        )
+
         return await cur.fetchone()
-
-
-async def set_telegram_connected(connected: bool):
-    async with await get_conn() as conn:
-        await conn.execute(
-            """UPDATE telegram_config
-               SET connected = %s, last_connected_at = CASE WHEN %s THEN now() ELSE last_connected_at END,
-                   updated_at = now()""",
-            (connected, connected),
-        )
-        await conn.commit()
-
-
-async def save_telegram_session(session_string: str):
-    async with await get_conn() as conn:
-        await conn.execute(
-            "UPDATE telegram_config SET session_string = %s, updated_at = now()",
-            (session_string,),
-        )
-        await conn.commit()
 
 
 # ---------- schedules ----------
