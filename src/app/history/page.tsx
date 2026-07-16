@@ -161,7 +161,7 @@ export default async function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.map((entry) => (
+                 {history.map((entry: any) => (
                     <tr
                       key={entry.id}
                       className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
