@@ -17,10 +17,10 @@ try {
   console.error("Database connection failed:", error);
 }
 
-// Type-safe fallbacks
-type Schedule = { id: number; enabled: boolean; [key: string]: any };
-type Audio = { id: number; isDefault: boolean; [key: string]: any };
-type HistoryEntry = { id: number; status: string; durationSeconds?: number; [key: string]: any };
+// Type definitions
+type Schedule = any;
+type Audio = any;
+type HistoryEntry = any;
 
 export async function ensureSeedData() {
   if (!db) return;
@@ -108,6 +108,10 @@ export function getSystemHealth() {
     memoryUsage: 48.7,
     diskUsage: 34.2,
     uptimeSeconds: 259200,
+    pythonVersion: "3.12",
+    ffmpegVersion: "6.0",           // ← Added this
+    pyrogramVersion: "2.1",
+    pytgcallsVersion: "3.0",
     broadcastActive: false,
     inVoiceChat: false,
     nextBroadcastAt: new Date(Date.now() + 3600000),
