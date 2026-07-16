@@ -45,19 +45,20 @@ async def init_clients():
 
     await pyro_client.start()
 
-    call_client = PyTgCalls(pyro_client)
-    await call_client.start()
+call_client = PyTgCalls(pyro_client)
+await call_client.start()
 
 try:
     await db.set_telegram_connected(True)
     await db.add_log(
         "info",
         "telegram",
-        "Connected to Telegram as user client"
+        "Connected to Telegram"
     )
 except Exception as e:
     print("Warning:", e)
-    return pyro_client, call_client
+
+return pyro_client, call_client
 
 
 async def join_and_play(chat_id: int, file_path: str):
@@ -87,19 +88,22 @@ async def leave_call(chat_id: int):
 
 
 async def shutdown_clients():
+    global pyro_client, call_client
+
     if call_client:
         try:
             await call_client.stop()
-        except Exception:
-            pass
+        except Exception as e:
+            print("Error stopping PyTgCalls:", e)
+
     if pyro_client:
         try:
             await pyro_client.stop()
-        except Exception:
-            pass
-    try:
-    await db.set_telegram_connected(False)
-except Exception:
-    pass
+        except Exception as e:
+            print("Error stopping Pyrogram:", e)
 
+    try:
+        await db.set_telegram_connected(False)
+    except Exception as e:
+        print("Warning:", e)
 
