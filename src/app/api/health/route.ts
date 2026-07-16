@@ -1,29 +1,27 @@
-import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { getDb } from "@/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-    if (!process.env.DATABASE_URL) {
-        return Response.json({
-            ok: false,
-            message: "DATABASE_URL missing",
-        });
-    }
+  try {
+    const db = getDb();
 
-    try {
-        await db.execute(sql`SELECT 1`);
-        return Response.json({ ok: true });
-    } catch (e) {
-        console.error(e);
+    await db.execute(sql`SELECT 1`);
 
-        return Response.json(
-            {
-                ok: false,
-            },
-            {
-                status: 500,
-            }
-        );
-    }
+    return Response.json({
+      ok: true,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return Response.json(
+      {
+        ok: false,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
