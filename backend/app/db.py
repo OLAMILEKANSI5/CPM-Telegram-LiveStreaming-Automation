@@ -45,6 +45,23 @@ async def get_telegram_config():
 
         return await cur.fetchone()
 
+# ---------- telegram status ----------
+async def set_telegram_connected(connected: bool):
+    async with await get_conn() as conn:
+        await conn.execute(
+            """
+            UPDATE telegram_config
+            SET connected = %s,
+                last_connected_at = CASE
+                    WHEN %s THEN NOW()
+                    ELSE last_connected_at
+                END,
+                updated_at = NOW()
+            """,
+            (connected, connected),
+        )
+        await conn.commit()
+
      # ---------- save_telegram_session ----------
 async def save_telegram_session(session_string: str):
     async with await get_conn() as conn:
