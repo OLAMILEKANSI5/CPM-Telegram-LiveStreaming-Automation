@@ -83,7 +83,7 @@ export default async function AudioLibraryPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {audios.map((audio) => (
+              {audios.map((audio: any) => (
                 <div
                   key={audio.id}
                   className="px-5 py-4 hover:bg-slate-50 transition-colors"
