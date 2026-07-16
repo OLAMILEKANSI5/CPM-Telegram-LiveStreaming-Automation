@@ -45,6 +45,49 @@ async def get_telegram_config():
 
         return await cur.fetchone()
 
+     # ---------- save_telegram_session ----------
+async def save_telegram_session(session_string: str):
+    async with await get_conn() as conn:
+
+        cur = await conn.execute(
+            "SELECT id FROM telegram_config LIMIT 1"
+        )
+
+        row = await cur.fetchone()
+
+        if row is None:
+
+            await conn.execute("""
+                INSERT INTO telegram_config
+                (
+                    connected,
+                    session_string,
+                    last_connected_at,
+                    updated_at
+                )
+                VALUES
+                (
+                    TRUE,
+                    %s,
+                    NOW(),
+                    NOW()
+                )
+            """, (session_string,))
+
+        else:
+
+            await conn.execute("""
+                UPDATE telegram_config
+                SET
+                    connected = TRUE,
+                    session_string = %s,
+                    last_connected_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = %s
+            """, (session_string, row["id"]))
+
+        await conn.commit()
+
 
 # ---------- schedules ----------
 async def get_enabled_schedules():
