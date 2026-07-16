@@ -105,3 +105,23 @@ export function getSystemHealth() {
     nextBroadcastAt: new Date(Date.now() + 3600000),
   };
 }
+
+export async function updateTelegramConfig(fields: any) {
+  if (!db) {
+    console.warn("Telegram config update skipped - no database");
+    return;
+  }
+  try {
+    const existing = await getTelegramConfig();
+    if (!existing) {
+      await db.insert(telegramConfig).values({ ...fields, updatedAt: new Date() });
+    } else {
+      await db
+        .update(telegramConfig)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(eq(telegramConfig.id, existing.id));
+    }
+  } catch (e) {
+    console.error("Failed to update telegram config:", e);
+  }
+}
