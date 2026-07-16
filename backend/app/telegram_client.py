@@ -90,4 +90,9 @@ async def shutdown_clients():
             await pyro_client.stop()
         except Exception:
             pass
+    try:
     await db.set_telegram_connected(False)
+except Exception:
+    pass
+
+
