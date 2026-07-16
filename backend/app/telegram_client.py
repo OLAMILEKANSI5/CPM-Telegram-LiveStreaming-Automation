@@ -48,8 +48,15 @@ async def init_clients():
     call_client = PyTgCalls(pyro_client)
     await call_client.start()
 
+try:
     await db.set_telegram_connected(True)
-    await db.add_log("info", "telegram", "Connected to Telegram as user client")
+    await db.add_log(
+        "info",
+        "telegram",
+        "Connected to Telegram as user client"
+    )
+except Exception as e:
+    print("Warning:", e)
     return pyro_client, call_client
 
 
