@@ -4,7 +4,7 @@ import { Pool } from "pg";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
+  throw new Error("postgresql://postgres:nCahhOHtzBDHJmHRTbtEBWUIBSZLxRPQ@tokaido.proxy.rlwy.net:57520/railway");
 }
 
 const globalForDb = globalThis as typeof globalThis & {
