@@ -23,8 +23,8 @@ export default async function HistoryPage() {
 
   const stats = {
     total: history.length,
-    completed: history.filter((h) => h.status === "completed").length,
-    failed: history.filter((h) => h.status === "failed").length,
+    completed: history.filter((h: any) => h.status === "completed").length,
+    failed: history.filter((h: any) => h.status === "failed").length,
     totalDuration: history.reduce(
       (acc, h) => acc + (h.durationSeconds || 0),
       0
