@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import {
   settings,
   schedules,
@@ -8,6 +8,8 @@ import {
   telegramConfig,
 } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
+
+const db = getDb();
 
 export type Setting = typeof settings.$inferSelect;
 export type Schedule = typeof schedules.$inferSelect;
