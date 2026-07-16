@@ -1,29 +1,35 @@
-// src/db/index.ts (updated)
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-const globalForDb = globalThis as typeof globalThis & { __pool?: Pool };
+const globalForDb = globalThis as typeof globalThis & {
+  __pool?: Pool;
+};
+
+let pool: Pool | undefined = globalForDb.__pool;
 
 export function getDb() {
-  if (!pool) {  // renamed for clarity
+  if (!pool) {
     const databaseUrl = process.env.DATABASE_URL;
 
     if (!databaseUrl) {
-      // During Next.js build (Netlify, Vercel static export, etc.) or when DB not configured
-      if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
-        console.warn("DATABASE_URL missing - using mock DB for build");
-        // Return a no-op drizzle instance for build-time safety
-        return drizzle({} as any); // or implement lightweight mock if needed
+      // Safe fallback during build time (Netlify, Vercel static builds, etc.)
+      if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
+        console.warn("⚠️ DATABASE_URL is missing. Using mock DB for build.");
+        // Return a dummy drizzle instance so build doesn't crash
+        return drizzle({} as any);
       }
       throw new Error("DATABASE_URL is missing");
     }
 
     pool = new Pool({
       connectionString: databaseUrl,
-      ssl: { rejectUnauthorized: false },
+      ssl: {
+        rejectUnauthorized: false,
+      },
     });
 
     globalForDb.__pool = pool;
   }
+
   return drizzle(pool);
 }
