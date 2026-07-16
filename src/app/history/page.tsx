@@ -22,14 +22,14 @@ export default async function HistoryPage() {
   const history = await getHistory(100);
 
   const stats = {
-    total: history.length,
-    completed: history.filter((h: any) => h.status === "completed").length,
-    failed: history.filter((h: any) => h.status === "failed").length,
-    totalDuration: history.reduce(
-      (acc, h) => acc + (h.durationSeconds || 0),
-      0
-    ),
-  };
+  total: history.length,
+  completed: history.filter((h: any) => h.status === "completed").length,
+  failed: history.filter((h: any) => h.status === "failed").length,
+  totalDuration: history.reduce(
+    (acc: number, h: any) => acc + (h.durationSeconds || 0),
+    0
+  ),
+};
 
   return (
     <>
