@@ -17,18 +17,16 @@ try {
   console.error("Database connection failed:", error);
 }
 
-// === Real functions with fallback ===
+// Type-safe fallbacks
+type Schedule = { id: number; enabled: boolean; [key: string]: any };
+type Audio = { id: number; isDefault: boolean; [key: string]: any };
+type HistoryEntry = { id: number; status: string; durationSeconds?: number; [key: string]: any };
+
 export async function ensureSeedData() {
   if (!db) return;
   try {
-    const existing = await db.select().from(settings).limit(1);
-    if (existing.length === 0) {
-      // Your original seed logic here...
-      console.log("Seeding default data...");
-    }
-  } catch (e) {
-    console.warn("Seed skipped:", e);
-  }
+    console.log("Seeding skipped in fallback mode");
+  } catch (e) {}
 }
 
 export async function getSettings() {
@@ -43,7 +41,7 @@ export async function getSettings() {
   }
 }
 
-export async function getSchedules() {
+export async function getSchedules(): Promise<Schedule[]> {
   if (!db) return [];
   try {
     return await db.select().from(schedules).orderBy(schedules.hour, schedules.minute);
@@ -52,7 +50,7 @@ export async function getSchedules() {
   }
 }
 
-export async function getAudios() {
+export async function getAudios(): Promise<Audio[]> {
   if (!db) return [];
   try {
     return await db.select().from(audios).orderBy(desc(audios.isDefault), audios.filename);
@@ -61,7 +59,7 @@ export async function getAudios() {
   }
 }
 
-export async function getHistory(limit = 10) {
+export async function getHistory(limit = 10): Promise<HistoryEntry[]> {
   if (!db) return [];
   try {
     return await db.select().from(history).orderBy(desc(history.startedAt)).limit(limit);
@@ -91,10 +89,7 @@ export async function getTelegramConfig() {
 }
 
 export async function updateTelegramConfig(fields: any) {
-  if (!db) {
-    console.warn("Cannot update Telegram config - no DB");
-    return;
-  }
+  if (!db) return;
   try {
     const existing = await getTelegramConfig();
     if (!existing) {
@@ -103,7 +98,7 @@ export async function updateTelegramConfig(fields: any) {
       await db.update(telegramConfig).set({ ...fields, updatedAt: new Date() }).where(eq(telegramConfig.id, existing.id));
     }
   } catch (e) {
-    console.error("Update failed:", e);
+    console.error(e);
   }
 }
 
