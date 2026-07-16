@@ -1,3 +1,5 @@
+
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
@@ -12,20 +14,18 @@ export function getDb() {
     const databaseUrl = process.env.DATABASE_URL;
 
     if (!databaseUrl) {
-      // Safe fallback during build time (Netlify, Vercel static builds, etc.)
-      if (process.env.NODE_ENV === "production" && !process.env.DATABASE_URL) {
-        console.warn("⚠️ DATABASE_URL is missing. Using mock DB for build.");
-        // Return a dummy drizzle instance so build doesn't crash
-        return drizzle({} as any);
-      }
-      throw new Error("DATABASE_URL is missing");
+      console.error("❌ DATABASE_URL is not set in environment variables");
+      // Return a dummy client so the app doesn't crash completely
+      return {
+        select: () => ({ from: () => ({ limit: () => Promise.resolve([]) }) }),
+        insert: () => ({ values: () => ({ onConflictDoNothing: () => Promise.resolve() }) }),
+        update: () => ({ set: () => ({ where: () => Promise.resolve() }) }),
+      } as any;
     }
 
     pool = new Pool({
       connectionString: databaseUrl,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: { rejectUnauthorized: false },
     });
 
     globalForDb.__pool = pool;
