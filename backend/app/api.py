@@ -6,6 +6,11 @@ from . import db, broadcast, telegram_client as tg
 app = FastAPI(title="Prayer Broadcast Backend")
 
 
+@app.get("/")
+async def root():
+    return {"service": "prayer-broadcast-backend", "status": "up"}
+
+
 class StartRequest(BaseModel):
     audio_id: int | None = None
     duration_minutes: int = 60
