@@ -20,9 +20,8 @@ export async function saveCredentials(formData: FormData) {
     });
 
     revalidatePath("/telegram");
-    // Do not return anything (void) for form action
   } catch (error) {
-    console.error("Save credentials error:", error);
+    console.error(error);
     throw new Error("Failed to save credentials");
   }
 }
