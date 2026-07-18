@@ -27,7 +27,6 @@ export default async function TelegramPage() {
     <>
       <TopBar title="Telegram Settings" />
       <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Header */}
         <div>
           <h2 className="text-lg font-bold text-slate-800">Telegram Configuration</h2>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -35,7 +34,6 @@ export default async function TelegramPage() {
           </p>
         </div>
 
-        {/* Connection Status Banner */}
         <Card
           className={
             isConnected
@@ -67,11 +65,6 @@ export default async function TelegramPage() {
                     {isConnected ? "Active" : "Setup Required"}
                   </StatusBadge>
                 </div>
-                <p className="text-sm text-slate-600 mt-1">
-                  {isConnected
-                    ? `Authorized as ${tg?.phoneNumber || "User"} • Auto-reconnect enabled`
-                    : "Configure your API credentials and authenticate to start broadcasting"}
-                </p>
               </div>
             </div>
           </div>
@@ -85,59 +78,42 @@ export default async function TelegramPage() {
                 <AlertTriangle className="w-5 h-5 shrink-0 text-blue-600" />
                 <div>
                   <strong>Important:</strong> Go to{" "}
-                  <a
-                    href="https://my.telegram.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline font-semibold"
-                  >
+                  <a href="https://my.telegram.org" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
                     my.telegram.org
                   </a>{" "}
-                  and create a new application to obtain your API ID and API Hash.
+                  and create a new application.
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <Key className="w-4 h-4 inline mr-1.5 text-slate-500" />
-                  API ID
-                </label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">API ID</label>
                 <input
                   type="text"
                   name="apiId"
-                  placeholder="Enter your API ID"
                   defaultValue={tg?.api_id || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <Hash className="w-4 h-4 inline mr-1.5 text-slate-500" />
-                  API Hash
-                </label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">API Hash</label>
                 <input
                   type="text"
                   name="apiHash"
-                  placeholder="Enter your API Hash"
                   defaultValue={tg?.api_hash || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  <Phone className="w-4 h-4 inline mr-1.5 text-slate-500" />
-                  Phone Number
-                </label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
                 <input
                   type="tel"
                   name="phone"
-                  placeholder="+2348102671080"
                   defaultValue={tg?.phone_number || ""}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg"
                   required
                 />
               </div>
@@ -148,9 +124,7 @@ export default async function TelegramPage() {
             </form>
           </Card>
 
-          {/* Channel Configuration */}
-          <Card title="Channel & Voice Chat" description="Configure broadcast target">
-            {/* You can add another form here later if needed */}
+          <Card title="Channel & Voice Chat">
             <div className="p-5 text-slate-500">
               Channel configuration coming soon...
             </div>
