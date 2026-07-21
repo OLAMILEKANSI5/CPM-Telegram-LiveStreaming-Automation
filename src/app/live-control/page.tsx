@@ -51,28 +51,31 @@ export default function LiveControlPage() {
     return () => clearInterval(id);
   }, [refreshStatus]);
 
-  const toggleBroadcast = async () => {
-    setPending(true);
-    try {
-      if (!isBroadcasting) {
-        await fetch("/api/broadcast", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "start", durationMinutes: 60 }),
-        });
-      } else {
-        await fetch("/api/broadcast", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "stop" }),
-        });
-      }
-    } finally {
-      setPending(false);
-      refreshStatus();
-    }
-  };
+ const toggleBroadcast = async () => {
+  setPending(true);
+  try {
+    const endpoint = isBroadcasting ? "/api/broadcast" : "/api/broadcast";
+    const method = "POST";
+    const body = isBroadcasting 
+      ? { action: "stop" } 
+      : { action: "start", durationMinutes: 60 };
 
+    const res = await fetch(endpoint, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) throw new Error("Failed");
+    
+    // Refresh immediately
+    await refreshStatus();
+  } catch (err) {
+    alert("Could not reach backend. Is Python backend running?");
+  } finally {
+    setPending(false);
+  }
+};
   const stopBroadcast = async () => {
     setPending(true);
     try {
