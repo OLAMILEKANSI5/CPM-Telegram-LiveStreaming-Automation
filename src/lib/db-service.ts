@@ -119,52 +119,14 @@ export function getSystemHealth() {
 }
 
 
-// ... existing code ...
-
-export async function createSchedule(data: any) {
-  if (!db) return null;
-  try {
-    const [row] = await db.insert(schedules).values({
-      ...data,
-      enabled: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
-    return row;
-  } catch (e) {
-    console.error(e);
-    return null;
+export async function createSchedule(scheduleData: any) {
+  if (!db) {
+    console.log("Demo mode - Schedule saved:", scheduleData);
+    return { id: Date.now(), ...scheduleData };
   }
-}
-
-export async function toggleSchedule(id: number, enabled: boolean) {
-  if (!db) return;
   try {
-    await db.update(schedules).set({ enabled, updatedAt: new Date() }).where(eq(schedules.id, id));
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-export async function deleteSchedule(id: number) {
-  if (!db) return;
-  try {
-    await db.delete(schedules).where(eq(schedules.id, id));
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// Audio upload simulation
-export async function createAudio(data: any) {
-  if (!db) return null;
-  try {
-    const [row] = await db.insert(audios).values({
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
-    return row;
+    const result = await db.insert(schedules).values(scheduleData).returning();
+    return result[0];
   } catch (e) {
     console.error(e);
     return null;
