@@ -35,7 +35,10 @@ export default function LiveControlPage() {
 
   const refreshStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/broadcast", { cache: "no-store" });
+     const res = await fetch("/api/broadcast", { 
+  cache: "no-store",
+  next: { revalidate: 0 } 
+});
       const data = await res.json();
       setBackendOnline(!data.error);
       setIsBroadcasting(!!data.broadcastActive);
