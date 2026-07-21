@@ -109,7 +109,7 @@ export function getSystemHealth() {
     diskUsage: 34.2,
     uptimeSeconds: 259200,
     pythonVersion: "3.12",
-    ffmpegVersion: "6.0",           // ← Added this
+    ffmpegVersion: "6.0",
     pyrogramVersion: "2.1",
     pytgcallsVersion: "3.0",
     broadcastActive: false,
@@ -118,10 +118,11 @@ export function getSystemHealth() {
   };
 }
 
+// ==================== NEW FUNCTIONS ADDED ====================
 
 export async function createSchedule(scheduleData: any) {
   if (!db) {
-    console.log("Demo mode - Schedule saved:", scheduleData);
+    console.log("✅ [Demo] Schedule saved:", scheduleData);
     return { id: Date.now(), ...scheduleData };
   }
   try {
@@ -130,5 +131,24 @@ export async function createSchedule(scheduleData: any) {
   } catch (e) {
     console.error(e);
     return null;
+  }
+}
+
+export async function createAudio(audioData: any) {
+  if (!db) {
+    console.log("✅ [Demo] Audio saved:", audioData.originalName);
+    return { id: Date.now(), ...audioData };
+  }
+  
+  try {
+    const result = await db.insert(audios).values({
+      ...audioData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return result[0];
+  } catch (e) {
+    console.error("❌ Audio save error:", e);
+    throw e;
   }
 }
