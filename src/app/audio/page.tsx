@@ -1,3 +1,7 @@
+"use client";   // ← Add this at the very top of the file (Line 1)
+
+import { useState } from "react";
+import { createAudio } from "@/lib/db-service";   // We'll create this next
 import { TopBar } from "@/components/topbar";
 import { Card, Button, StatusBadge } from "@/components/ui/stat-card";
 import { getAudios } from "@/lib/db-service";
@@ -26,51 +30,43 @@ export default async function AudioLibraryPage() {
       <TopBar title="Audio Library" />
       <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">Prayer Audio Files</h2>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Manage your collection of prayer recordings for broadcast
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 flex items-center gap-2">
-              <FileAudio className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-semibold text-blue-700">
-                {audios.length} file{audios.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <Button>
-              <Upload className="w-4 h-4" />
-              Upload Audio
-            </Button>
-          </div>
-        </div>
+       {/* Header with Upload Button */}
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <div>
+    <h2 className="text-lg font-bold text-slate-800">Prayer Audio Files</h2>
+    <p className="text-sm text-slate-500 mt-0.5">
+      Manage your collection of prayer recordings for broadcast
+    </p>
+  </div>
+  <label className="cursor-pointer">
+    <input
+      type="file"
+      accept="audio/*"
+      onChange={handleFileUpload}
+      className="hidden"
+    />
+    <div className="flex items-center gap-2 bg-[#0d2856] text-white px-5 py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-900 transition-all">
+      <Upload className="w-4 h-4" />
+      Upload Audio
+    </div>
+  </label>
+</div>
 
-        {/* Upload dropzone */}
-        <Card className="border-2 border-dashed border-slate-300 hover:border-[#4a90e2] transition-colors bg-slate-50/50">
-          <div className="p-10 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-4">
-              <Plus className="w-8 h-8 text-[#0d2856]" strokeWidth={2} />
-            </div>
-            <h3 className="text-base font-bold text-slate-800 mb-1">
-              Drop audio files here or click to browse
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              Supports MP3, WAV, AAC, OGG • Maximum file size: 500MB
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <Button size="sm">
-                <Upload className="w-4 h-4" />
-                Choose Files
-              </Button>
-              <Button size="sm" variant="outline">
-                Select from Folder
-              </Button>
-            </div>
-          </div>
-        </Card>
-
+{/* Upload Dropzone - Now Clickable */}
+<Card className="border-2 border-dashed border-slate-300 hover:border-[#0d2856] transition-colors bg-slate-50/50">
+  <div className="p-10 text-center">
+    <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center mb-4">
+      <Upload className="w-8 h-8 text-[#0d2856]" />
+    </div>
+    <h3 className="text-base font-bold text-slate-800 mb-1">
+      Click above or drop audio files here
+    </h3>
+    <p className="text-sm text-slate-500 mb-4">
+      MP3, WAV • Max 500MB
+    </p>
+    <p className="text-xs text-slate-400">Files will be saved and ready for broadcast</p>
+  </div>
+</Card>
         {/* Audio List */}
         <Card title="Uploaded Audio Files" description="Your prayer recording library">
           {audios.length === 0 ? (
