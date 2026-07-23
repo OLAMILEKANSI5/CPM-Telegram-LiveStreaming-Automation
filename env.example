@@ -1,0 +1,19 @@
+DATABASE_URL=postgresql://postgres:nCahhOHtzBDHJmHRTbtEBWUIBSZLxRPQ@tokaido.proxy.rlwy.net:57520/railway
+BACKEND_URL=http://18.135.139.41:8081
+
+# Telegram API credentials (from https://my.telegram.org -> API development tools)
+TG_API_ID=37281103
+TG_API_HASH=5b5a11ee01300b73bab19eeb3a82598f
+
+# The phone number of the Telegram USER ACCOUNT that will join the voice chat.
+# NOTE: PyTgCalls needs a normal user account, not a bot, to join/stream in group voice chats.
+TG_PHONE_NUMBER=+2348102671080
+
+# Folder where uploaded audio files live (shared with the Next.js app's audio uploads)
+AUDIO_DIR=./uploads/audio
+
+# Port the backend's status/control API listens on
+BACKEND_PORT=8081
+
+# How often (seconds) the scheduler checks the schedules table
+SCHEDULER_POLL_SECONDS=30
