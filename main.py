@@ -1,0 +1,10 @@
+kurigram==2.2.23
+
+py-tgcalls==2.2.11
+psycopg[binary]==3.2.3
+apscheduler==3.10.4
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-dotenv==1.0.1
+pydantic==2.9.2
+python-multipart==0.0.12
