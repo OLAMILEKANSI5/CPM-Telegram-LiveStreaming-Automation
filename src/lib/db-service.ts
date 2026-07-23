@@ -152,3 +152,126 @@ export async function createAudio(audioData: any) {
     throw e;
   }
 }
+
+export async function toggleSchedule(id: number, enabled: boolean) {
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(schedules)
+      .set({ enabled, updatedAt: new Date() })
+      .where(eq(schedules.id, id))
+      .returning();
+    return result[0] || null;
+  } catch (e) {
+    console.error("❌ Toggle schedule error:", e);
+    return null;
+  }
+}
+
+export async function deleteSchedule(id: number) {
+  if (!db) return false;
+  try {
+    await db.delete(schedules).where(eq(schedules.id, id));
+    return true;
+  } catch (e) {
+    console.error("❌ Delete schedule error:", e);
+    return false;
+  }
+}
+
+export async function updateSchedule(id: number, fields: any) {
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(schedules)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(eq(schedules.id, id))
+      .returning();
+    return result[0] || null;
+  } catch (e) {
+    console.error("❌ Update schedule error:", e);
+    return null;
+  }
+}
+
+export async function getScheduleById(id: number) {
+  if (!db) return null;
+  try {
+    const [row] = await db.select().from(schedules).where(eq(schedules.id, id)).limit(1);
+    return row || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSettings(fields: Record<string, string>) {
+  if (!db) return;
+  try {
+    for (const [key, value] of Object.entries(fields)) {
+      const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      if (existing.length > 0) {
+        await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
+      } else {
+        await db.insert(settings).values({ key, value, updatedAt: new Date() });
+      }
+    }
+  } catch (e) {
+    console.error("❌ Update settings error:", e);
+  }
+}
+
+export async function resetSettingsToDefaults() {
+  if (!db) return;
+  try {
+    await db.delete(settings);
+  } catch (e) {
+    console.error("❌ Reset settings error:", e);
+  }
+}
+
+export async function getAllSettingsRaw() {
+  if (!db) return [];
+  try {
+    return await db.select().from(settings);
+  } catch {
+    return [];
+  }
+}
+
+export async function getLogs(limit = 200, category?: string) {
+  if (!db) return [];
+  try {
+    let query = db.select().from(logs).orderBy(desc(logs.timestamp)).limit(limit);
+    const rows = await query;
+    if (category && category !== "all") {
+      return rows.filter((r: any) => r.category === category);
+    }
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
+export async function clearOldLogs(days = 30) {
+  if (!db) return 0;
+  try {
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const { lt } = await import("drizzle-orm");
+    const deleted = await db.delete(logs).where(lt(logs.timestamp, cutoff)).returning();
+    return deleted.length;
+  } catch (e) {
+    console.error("❌ Clear old logs error:", e);
+    return 0;
+  }
+}
+
+export async function clearAllLogs() {
+  if (!db) return 0;
+  try {
+    const deleted = await db.delete(logs).returning();
+    return deleted.length;
+  } catch (e) {
+    console.error("❌ Clear all logs error:", e);
+    return 0;
+  }
+}

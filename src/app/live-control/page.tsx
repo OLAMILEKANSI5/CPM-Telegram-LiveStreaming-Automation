@@ -28,7 +28,6 @@ import { cn } from "@/lib/utils";
 export default function LiveControlPage() {
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [inVoiceChat, setInVoiceChat] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(85);
   const [backendOnline, setBackendOnline] = useState(true);
   const [pending, setPending] = useState(false);
@@ -87,6 +86,52 @@ export default function LiveControlPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "stop" }),
       });
+    } finally {
+      setPending(false);
+      refreshStatus();
+    }
+  };
+
+  const restartBroadcast = async () => {
+    setPending(true);
+    try {
+      await fetch("/api/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" }),
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+      const res = await fetch("/api/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", durationMinutes: 60 }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.detail || data?.error || "Could not restart broadcast.");
+      }
+    } catch {
+      alert("Could not reach backend. Is the Python backend running?");
+    } finally {
+      setPending(false);
+      refreshStatus();
+    }
+  };
+
+  const testBroadcast = async () => {
+    setPending(true);
+    try {
+      const res = await fetch("/api/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", durationMinutes: 1 }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.detail || data?.error || "Could not start test broadcast. Check Telegram & audio setup.");
+      }
+    } catch {
+      alert("Could not reach backend. Is the Python backend running?");
     } finally {
       setPending(false);
       refreshStatus();
@@ -199,40 +244,32 @@ export default function LiveControlPage() {
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                   {isBroadcasting ? (
                     <>
-                      <Button variant="danger" onClick={stopBroadcast}>
+                      <Button variant="danger" onClick={stopBroadcast} disabled={pending}>
                         <Square className="w-4 h-4" />
                         Stop Broadcast
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={restartBroadcast} disabled={pending}>
                         <RotateCcw className="w-4 h-4" />
                         Restart
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => setIsMuted(!isMuted)}
+                        disabled
+                        title="Live volume control isn't supported by the backend yet"
                       >
-                        {isMuted ? (
-                          <>
-                            <VolumeX className="w-4 h-4" />
-                            Unmute
-                          </>
-                        ) : (
-                          <>
-                            <Volume2 className="w-4 h-4" />
-                            Mute
-                          </>
-                        )}
+                        <VolumeX className="w-4 h-4" />
+                        Mute
                       </Button>
                     </>
                   ) : (
                     <>
-                      <Button onClick={toggleBroadcast}>
+                      <Button onClick={toggleBroadcast} disabled={pending}>
                         <Play className="w-4 h-4" />
                         Start Broadcast Now
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={testBroadcast} disabled={pending}>
                         <Activity className="w-4 h-4" />
-                        Test Broadcast
+                        Test Broadcast (1 min)
                       </Button>
                     </>
                   )}
@@ -243,20 +280,23 @@ export default function LiveControlPage() {
             {/* Volume slider when broadcasting */}
             {isBroadcasting && (
               <div className="mt-8 pt-6 border-t border-slate-200">
-                <div className="flex items-center gap-4 max-w-md">
-                  <Volume2 className="w-5 h-5 text-slate-500" />
+                <div className="flex items-center gap-4 max-w-md" title="Live volume control isn't supported by the backend yet">
+                  <Volume2 className="w-5 h-5 text-slate-400" />
                   <input
                     type="range"
                     min="0"
                     max="100"
                     value={volume}
-                    onChange={(e) => setVolume(Number(e.target.value))}
-                    className="flex-1 h-2 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[#0d2856]"
+                    disabled
+                    className="flex-1 h-2 bg-slate-200 rounded-full appearance-none cursor-not-allowed opacity-50 accent-[#0d2856]"
                   />
-                  <span className="text-sm font-bold text-slate-700 w-10 text-right">
+                  <span className="text-sm font-bold text-slate-400 w-10 text-right">
                     {volume}%
                   </span>
                 </div>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  Live volume control isn&apos;t implemented in the backend yet
+                </p>
               </div>
             )}
           </div>
@@ -265,28 +305,26 @@ export default function LiveControlPage() {
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button
-            onClick={() => setInVoiceChat(!inVoiceChat)}
-            className={cn(
-              "p-5 rounded-xl border-2 transition-all text-left hover:shadow-md group",
-              inVoiceChat
-                ? "bg-emerald-50 border-emerald-300"
-                : "bg-white border-slate-200 hover:border-slate-300"
-            )}
+            disabled
+            title="Joining the voice chat without starting a broadcast isn't supported by the backend yet — Start Broadcast joins and plays together"
+            className="p-5 rounded-xl border-2 border-slate-200 bg-white text-left opacity-50 cursor-not-allowed"
           >
-            {inVoiceChat ? (
-              <Phone className="w-8 h-8 text-emerald-600 mb-2" />
-            ) : (
-              <Phone className="w-8 h-8 text-slate-400 mb-2 group-hover:text-[#0d2856]" />
-            )}
-            <div className="font-bold text-sm text-slate-800">
-              {inVoiceChat ? "Leave Voice Chat" : "Join Voice Chat"}
-            </div>
-            <div className="text-xs text-slate-500 mt-0.5">
-              {inVoiceChat ? "Currently connected" : "Connect to VC only"}
-            </div>
+            <Phone className="w-8 h-8 text-slate-400 mb-2" />
+            <div className="font-bold text-sm text-slate-800">Join Voice Chat</div>
+            <div className="text-xs text-slate-500 mt-0.5">Coming soon</div>
           </button>
 
-          <button className="p-5 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all text-left group">
+          <button
+            onClick={restartBroadcast}
+            disabled={pending || !isBroadcasting}
+            title={!isBroadcasting ? "Start a broadcast first" : "Stop and restart the current broadcast"}
+            className={cn(
+              "p-5 rounded-xl border-2 transition-all text-left group",
+              !isBroadcasting
+                ? "border-slate-200 bg-white opacity-50 cursor-not-allowed"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+            )}
+          >
             <RotateCcw className="w-8 h-8 text-slate-400 mb-2 group-hover:text-[#0d2856]" />
             <div className="font-bold text-sm text-slate-800">Restart Stream</div>
             <div className="text-xs text-slate-500 mt-0.5">
@@ -294,19 +332,33 @@ export default function LiveControlPage() {
             </div>
           </button>
 
-          <button className="p-5 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all text-left group">
+          <button
+            onClick={testBroadcast}
+            disabled={pending || isBroadcasting}
+            title={isBroadcasting ? "Stop the current broadcast first" : "Starts a real 1-minute broadcast to Telegram"}
+            className={cn(
+              "p-5 rounded-xl border-2 transition-all text-left group",
+              isBroadcasting
+                ? "border-slate-200 bg-white opacity-50 cursor-not-allowed"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+            )}
+          >
             <Activity className="w-8 h-8 text-slate-400 mb-2 group-hover:text-[#0d2856]" />
             <div className="font-bold text-sm text-slate-800">Run Test</div>
             <div className="text-xs text-slate-500 mt-0.5">
-              30-second test broadcast
+              1-minute test broadcast
             </div>
           </button>
 
-          <button className="p-5 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition-all text-left group">
-            <Settings className="w-8 h-8 text-slate-400 mb-2 group-hover:text-[#0d2856]" />
+          <button
+            disabled
+            title="Bitrate and quality are fixed in the backend (48kbps mono) — not yet configurable from here"
+            className="p-5 rounded-xl border-2 border-slate-200 bg-white text-left opacity-50 cursor-not-allowed"
+          >
+            <Settings className="w-8 h-8 text-slate-400 mb-2" />
             <div className="font-bold text-sm text-slate-800">Stream Settings</div>
             <div className="text-xs text-slate-500 mt-0.5">
-              Bitrate, quality, etc.
+              Coming soon
             </div>
           </button>
         </div>
@@ -454,15 +506,28 @@ export default function LiveControlPage() {
               </div>
 
               <div className="mt-4 space-y-2">
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled
+                  title="Multi-track queueing isn't supported by the backend yet"
+                >
                   <Music2 className="w-4 h-4" />
                   Add Current to Queue
                 </Button>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled
+                  title="Random rotation isn't supported by the backend yet"
+                >
                   <RotateCcw className="w-4 h-4" />
                   Enable Random Rotation
                 </Button>
               </div>
+              <p className="text-[11px] text-slate-400 mt-2 text-center">Coming soon</p>
 
               <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1">
                 <div className="flex justify-between">

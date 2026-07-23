@@ -3,7 +3,8 @@
 import { TopBar } from "@/components/topbar";
 import { Card, Button } from "@/components/ui/stat-card";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { clearAllLogsAction } from "@/app/settings/actions";
 import {
   FileText,
   RefreshCw,
@@ -18,175 +19,26 @@ import {
   Send,
   CalendarClock,
   Cpu,
+  Loader2,
 } from "lucide-react";
 
 const CATEGORIES = [
-  { id: "all", label: "All Logs", icon: FileText, color: "slate" },
-  { id: "system", label: "System", icon: Cpu, color: "blue" },
-  { id: "telegram", label: "Telegram", icon: Send, color: "purple" },
-  { id: "scheduler", label: "Scheduler", icon: CalendarClock, color: "amber" },
-  { id: "broadcast", label: "Broadcast", icon: Radio, color: "emerald" },
-  { id: "ffmpeg", label: "FFmpeg", color: "red", icon: Bug },
+  { id: "all", label: "All Logs", icon: FileText },
+  { id: "system", label: "System", icon: Cpu },
+  { id: "telegram", label: "Telegram", icon: Send },
+  { id: "scheduler", label: "Scheduler", icon: CalendarClock },
+  { id: "broadcast", label: "Broadcast", icon: Radio },
+  { id: "ffmpeg", label: "FFmpeg", icon: Bug },
 ];
 
-// Sample logs data
-const SAMPLE_LOGS = [
-  {
-    id: 1,
-    timestamp: new Date(Date.now() - 1000 * 60 * 2),
-    level: "info",
-    category: "system",
-    message: "System health check completed. All services running normally.",
-  },
-  {
-    id: 2,
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    level: "info",
-    category: "scheduler",
-    message: "Scheduled job 'morning_prayer' registered for 06:00 Africa/Lagos",
-  },
-  {
-    id: 3,
-    timestamp: new Date(Date.now() - 1000 * 60 * 45),
-    level: "debug",
-    category: "telegram",
-    message: "Pyrogram client initialized. Session: charis_prayer_bot",
-  },
-  {
-    id: 4,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    level: "info",
-    category: "broadcast",
-    message: "Starting scheduled broadcast: Daily Morning Prayer",
-  },
-  {
-    id: 5,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 - 5000),
-    level: "info",
-    category: "telegram",
-    message: "Joining voice chat on channel -1001234567890",
-  },
-  {
-    id: 6,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 - 8000),
-    level: "debug",
-    category: "ffmpeg",
-    message: "ffmpeg -i morning_prayer.mp3 -f s16le -ac 1 -ar 48000 -acodec pcm_s16le pipe:1",
-  },
-  {
-    id: 7,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 - 10000),
-    level: "info",
-    category: "ffmpeg",
-    message: "FFmpeg started streaming. Input duration: 59:00. Bitrate: 48kbps.",
-  },
-  {
-    id: 8,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 - 30000),
-    level: "info",
-    category: "broadcast",
-    message: "Audio stream started successfully. Listeners: 24",
-  },
-  {
-    id: 9,
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    level: "warning",
-    category: "telegram",
-    message: "Temporary connection instability detected. Auto-reconnect in 3s...",
-  },
-  {
-    id: 10,
-    timestamp: new Date(Date.now() - 1000 * 60 * 29),
-    level: "info",
-    category: "telegram",
-    message: "Reconnected successfully to Telegram servers",
-  },
-  {
-    id: 11,
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    level: "warning",
-    category: "ffmpeg",
-    message: "Buffer underrun detected. Adjusting stream timing...",
-  },
-  {
-    id: 12,
-    timestamp: new Date(Date.now() - 1000 * 60 * 4),
-    level: "info",
-    category: "ffmpeg",
-    message: "Stream buffer recovered. Timing stabilized.",
-  },
-  {
-    id: 13,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    level: "info",
-    category: "broadcast",
-    message: "Scheduled end time reached. Stopping broadcast.",
-  },
-  {
-    id: 14,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2 + 5000),
-    level: "info",
-    category: "ffmpeg",
-    message: "FFmpeg process terminated cleanly. Exit code: 0",
-  },
-  {
-    id: 15,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2 + 10000),
-    level: "info",
-    category: "telegram",
-    message: "Left voice chat. Disconnected from group call.",
-  },
-  {
-    id: 16,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2 + 12000),
-    level: "info",
-    category: "broadcast",
-    message: "Broadcast completed successfully. Duration: 60:00. Avg listeners: 22",
-  },
-  {
-    id: 17,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-    level: "error",
-    category: "broadcast",
-    message: "Failed to start broadcast. Voice chat unavailable.",
-    details: "The group call could not be started. Check channel permissions and bot/admin status.",
-  },
-  {
-    id: 18,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3 - 5000),
-    level: "error",
-    category: "telegram",
-    message: "CHAT_ADMIN_REQUIRED: Need admin rights to manage voice chats",
-  },
-  {
-    id: 19,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    level: "info",
-    category: "system",
-    message: "CHARIS Prayer Broadcast System v1.0.0 started",
-  },
-  {
-    id: 20,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    level: "info",
-    category: "system",
-    message: "Loading configuration from /app/config/.env",
-  },
-  {
-    id: 21,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    level: "info",
-    category: "system",
-    message: "Database initialized. SQLite connection OK.",
-  },
-  {
-    id: 22,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    level: "info",
-    category: "scheduler",
-    message: "APScheduler started with 1 job(s)",
-  },
-];
+type LogEntry = {
+  id: number;
+  timestamp: string;
+  level: string;
+  category: string;
+  message: string;
+  details?: string | null;
+};
 
 const levelIcons: Record<string, typeof Info> = {
   debug: Bug,
@@ -213,27 +65,68 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function LogsPage() {
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [clearing, setClearing] = useState(false);
 
-  const filteredLogs = SAMPLE_LOGS.filter((log) => {
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/logs?limit=500", { cache: "no-store" });
+      const data = await res.json();
+      setLogs(data.logs || []);
+    } catch {
+      // keep whatever we last had; the page still functions, just stale
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(fetchLogs, 10000);
+    return () => clearInterval(id);
+  }, [autoRefresh, fetchLogs]);
+
+  const filteredLogs = logs.filter((log) => {
     if (selectedCategory !== "all" && log.category !== selectedCategory) return false;
-    if (
-      searchQuery &&
-      !log.message.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-      return false;
+    if (levelFilter !== "all" && log.level !== levelFilter) return false;
+    if (searchQuery && !log.message.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
   const counts = {
-    all: SAMPLE_LOGS.length,
-    system: SAMPLE_LOGS.filter((l) => l.category === "system").length,
-    telegram: SAMPLE_LOGS.filter((l) => l.category === "telegram").length,
-    scheduler: SAMPLE_LOGS.filter((l) => l.category === "scheduler").length,
-    broadcast: SAMPLE_LOGS.filter((l) => l.category === "broadcast").length,
-    ffmpeg: SAMPLE_LOGS.filter((l) => l.category === "ffmpeg").length,
+    all: logs.length,
+    system: logs.filter((l) => l.category === "system").length,
+    telegram: logs.filter((l) => l.category === "telegram").length,
+    scheduler: logs.filter((l) => l.category === "scheduler").length,
+    broadcast: logs.filter((l) => l.category === "broadcast").length,
+    ffmpeg: logs.filter((l) => l.category === "ffmpeg").length,
+  };
+
+  const handleExport = () => {
+    const url = `/api/logs?format=csv&limit=5000${selectedCategory !== "all" ? `&category=${selectedCategory}` : ""}`;
+    window.open(url, "_blank");
+  };
+
+  const handleClear = async () => {
+    if (!confirm("Delete ALL log entries? This cannot be undone.")) return;
+    setClearing(true);
+    try {
+      await clearAllLogsAction();
+      await fetchLogs();
+    } catch {
+      alert("Could not clear logs.");
+    } finally {
+      setClearing(false);
+    }
   };
 
   return (
@@ -258,16 +151,24 @@ export default function LogsPage() {
               />
               <span className="text-slate-600 font-medium">Auto-refresh</span>
             </label>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExport}>
               <Download className="w-4 h-4" />
               Export
             </Button>
-            <Button size="sm">
-              <RefreshCw className="w-4 h-4" />
+            <Button size="sm" onClick={fetchLogs} disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>
         </div>
+
+        {logs.length === 0 && !loading && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg px-4 py-3">
+            No log entries yet. Logs are written by the Python backend as it runs
+            (Telegram connection, scheduler activity, broadcasts). Once the backend
+            has been running a bit, entries will show up here.
+          </div>
+        )}
 
         {/* Category tabs */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -313,21 +214,30 @@ export default function LogsPage() {
                 className="flex-1 bg-transparent border-none outline-none text-sm text-slate-700 placeholder:text-slate-400"
               />
             </div>
-            <select className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700">
-              <option>All Levels</option>
-              <option>Info</option>
-              <option>Warnings</option>
-              <option>Errors</option>
-              <option>Debug</option>
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700"
+            >
+              <option value="all">All Levels</option>
+              <option value="info">Info</option>
+              <option value="warning">Warnings</option>
+              <option value="error">Errors</option>
+              <option value="debug">Debug</option>
             </select>
-            <Button variant="outline" size="sm">
-              <Trash2 className="w-4 h-4" />
+            <Button variant="outline" size="sm" onClick={handleClear} disabled={clearing}>
+              {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               Clear
             </Button>
           </div>
 
           <div className="bg-slate-950 font-mono text-xs max-h-[600px] overflow-y-auto">
-            {filteredLogs.length === 0 ? (
+            {loading ? (
+              <div className="p-10 text-center text-slate-500 flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading logs…
+              </div>
+            ) : filteredLogs.length === 0 ? (
               <div className="p-10 text-center text-slate-500">
                 No log messages match your filter
               </div>
@@ -341,7 +251,7 @@ export default function LogsPage() {
                       className="flex items-start gap-3 px-4 py-2 border-b border-slate-800/50 hover:bg-slate-900/50 transition-colors group"
                     >
                       <span className="text-slate-500 shrink-0 w-20 text-[11px] pt-0.5">
-                        {log.timestamp.toLocaleTimeString("en-US", {
+                        {new Date(log.timestamp).toLocaleTimeString("en-US", {
                           hour12: false,
                           hour: "2-digit",
                           minute: "2-digit",
@@ -351,7 +261,7 @@ export default function LogsPage() {
                       <span
                         className={cn(
                           "shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase",
-                          levelColors[log.level]
+                          levelColors[log.level] || levelColors.info
                         )}
                       >
                         <LevelIcon className="w-3 h-3" />
@@ -381,11 +291,9 @@ export default function LogsPage() {
           </div>
           <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
             <span>
-              Showing {filteredLogs.length} of {SAMPLE_LOGS.length} log entries
+              Showing {filteredLogs.length} of {logs.length} log entries
             </span>
-            <span>
-              Log file: /app/logs/{selectedCategory === "all" ? "system" : selectedCategory}.log
-            </span>
+            <span>Source: PostgreSQL `logs` table (written by the backend)</span>
           </div>
         </Card>
       </div>

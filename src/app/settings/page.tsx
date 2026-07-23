@@ -1,21 +1,17 @@
 import { TopBar } from "@/components/topbar";
-import { Card, Button } from "@/components/ui/stat-card";
-import { getSettings } from "@/lib/db-service";
+import { Card } from "@/components/ui/stat-card";
+import { SubmitButton } from "@/components/submit-button";
+import { ResetSettingsButton } from "@/components/reset-settings-button";
+import { SettingsDataBackup } from "@/components/settings-data-backup";
+import { getSettings, getAudios } from "@/lib/db-service";
+import { saveSettings } from "./actions";
 import {
-  Settings as SettingsIcon,
   Church,
   Clock,
-  Palette,
   FolderOpen,
   Music2,
   Bell,
   Shield,
-  Save,
-  RefreshCw,
-  Database,
-  Download,
-  Upload,
-  Trash2,
   Info,
   HardDrive,
   Globe,
@@ -24,7 +20,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const settings = await getSettings();
+  const [settings, audios] = await Promise.all([getSettings(), getAudios()]);
+  const bool = (v: any) => v === "true" || v === true;
 
   return (
     <>
@@ -38,7 +35,7 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <form action={saveSettings} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main settings form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Church Information */}
@@ -51,6 +48,7 @@ export default async function SettingsPage() {
                   </label>
                   <input
                     type="text"
+                    name="church_name"
                     defaultValue={settings.church_name || "CHARIS Power Ministry"}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 transition-all"
                   />
@@ -65,6 +63,8 @@ export default async function SettingsPage() {
                   </label>
                   <input
                     type="text"
+                    name="logo_url"
+                    defaultValue={settings.logo_url || ""}
                     placeholder="/static/logo.png"
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 transition-all"
                   />
@@ -81,6 +81,7 @@ export default async function SettingsPage() {
                     Default Timezone
                   </label>
                   <select
+                    name="timezone"
                     defaultValue={settings.timezone || "Africa/Lagos"}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 bg-white"
                   >
@@ -107,8 +108,9 @@ export default async function SettingsPage() {
                     <label className="flex-1 flex items-center gap-3 p-3 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-slate-300 has-[:checked]:border-[#4a90e2] has-[:checked]:bg-blue-50">
                       <input
                         type="radio"
-                        name="timeformat"
-                        defaultChecked
+                        name="time_format"
+                        value="24"
+                        defaultChecked={(settings.time_format || "24") === "24"}
                         className="w-4 h-4 accent-[#0d2856]"
                       />
                       <div>
@@ -121,7 +123,9 @@ export default async function SettingsPage() {
                     <label className="flex-1 flex items-center gap-3 p-3 border-2 border-slate-200 rounded-lg cursor-pointer hover:border-slate-300 has-[:checked]:border-[#4a90e2] has-[:checked]:bg-blue-50">
                       <input
                         type="radio"
-                        name="timeformat"
+                        name="time_format"
+                        value="12"
+                        defaultChecked={settings.time_format === "12"}
                         className="w-4 h-4 accent-[#0d2856]"
                       />
                       <div>
@@ -146,11 +150,13 @@ export default async function SettingsPage() {
                   </label>
                   <input
                     type="text"
+                    name="audio_folder"
                     defaultValue={settings.audio_folder || "./uploads/audio"}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 font-mono text-sm transition-all"
                   />
                   <p className="text-xs text-slate-500 mt-1.5">
-                    Path where uploaded audio files are stored
+                    Path where the backend stores uploaded audio files (set via
+                    the backend&apos;s <code>AUDIO_DIR</code> environment variable)
                   </p>
                 </div>
 
@@ -160,14 +166,16 @@ export default async function SettingsPage() {
                     Default Broadcast Audio
                   </label>
                   <select
+                    name="default_audio_id"
                     defaultValue={settings.default_audio_id || ""}
                     className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 bg-white"
                   >
-                    <option value="">
-                      Morning Prayer - Speaking in Tongues.mp3
-                    </option>
-                    <option value="1">Sample 1</option>
-                    <option value="2">Sample 2</option>
+                    <option value="">Use audio library default</option>
+                    {audios.map((a: any) => (
+                      <option key={a.id} value={a.id}>
+                        {a.originalName}
+                      </option>
+                    ))}
                   </select>
                   <p className="text-xs text-slate-500 mt-1.5">
                     Fallback audio when no audio is specified for a schedule
@@ -180,6 +188,7 @@ export default async function SettingsPage() {
                       Stream Quality
                     </label>
                     <select
+                      name="stream_quality"
                       defaultValue={settings.stream_quality || "high"}
                       className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 bg-white"
                     >
@@ -194,13 +203,22 @@ export default async function SettingsPage() {
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Auto-stop After
                     </label>
-                    <select defaultValue="audio_end" className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 bg-white">
+                    <select
+                      name="autostop_mode"
+                      defaultValue={settings.autostop_mode || "audio_end"}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-800 focus:border-[#4a90e2] focus:ring-2 focus:ring-blue-100 bg-white"
+                    >
                       <option value="audio_end">When audio finishes</option>
                       <option value="duration">After scheduled duration</option>
                       <option value="both">Whichever comes first</option>
                     </select>
                   </div>
                 </div>
+                <p className="text-xs text-slate-400">
+                  Stream quality and auto-stop mode are saved for reference; the
+                  backend currently always loops audio to the schedule&apos;s
+                  duration at 128kbps.
+                </p>
               </div>
             </Card>
 
@@ -219,7 +237,8 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked
+                    name="notify_start"
+                    defaultChecked={bool(settings.notify_start ?? "true")}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
@@ -234,7 +253,8 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked
+                    name="notify_end"
+                    defaultChecked={bool(settings.notify_end ?? "true")}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
@@ -249,7 +269,8 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked
+                    name="notify_error"
+                    defaultChecked={bool(settings.notify_error ?? "true")}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
@@ -264,6 +285,8 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
+                    name="daily_summary"
+                    defaultChecked={bool(settings.daily_summary)}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
@@ -293,6 +316,8 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
+                    name="require_login"
+                    defaultChecked={bool(settings.require_login)}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
@@ -308,23 +333,23 @@ export default async function SettingsPage() {
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked
+                    name="auto_lock"
+                    defaultChecked={bool(settings.auto_lock ?? "true")}
                     className="w-5 h-5 rounded border-slate-300 text-[#0d2856] focus:ring-[#4a90e2]"
                   />
                 </label>
+                <p className="text-xs text-slate-400">
+                  Login and auto-lock preferences are saved here but must be
+                  enforced by your deployment (e.g. a reverse-proxy auth layer);
+                  the app itself does not yet implement a login screen.
+                </p>
               </div>
             </Card>
 
             {/* Save button */}
             <div className="flex items-center justify-end gap-3">
-              <Button variant="outline">
-                <RefreshCw className="w-4 h-4" />
-                Reset to Defaults
-              </Button>
-              <Button>
-                <Save className="w-4 h-4" />
-                Save All Settings
-              </Button>
+              <ResetSettingsButton />
+              <SubmitButton>Save All Settings</SubmitButton>
             </div>
           </div>
 
@@ -339,31 +364,31 @@ export default async function SettingsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Python</span>
-                  <span className="font-mono text-slate-700 text-xs">3.12.1</span>
+                  <span className="font-mono text-slate-700 text-xs">3.12</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">FFmpeg</span>
                   <span className="font-mono text-slate-700 text-xs">6.0</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Pyrogram</span>
-                  <span className="font-mono text-slate-700 text-xs">2.1.41</span>
+                  <span className="text-slate-500">Pyrogram (kurigram)</span>
+                  <span className="font-mono text-slate-700 text-xs">2.2.23</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">PyTgCalls</span>
-                  <span className="font-mono text-slate-700 text-xs">3.0.0</span>
+                  <span className="font-mono text-slate-700 text-xs">2.2.11</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Database</span>
-                  <span className="font-mono text-slate-700 text-xs">SQLite</span>
+                  <span className="font-mono text-slate-700 text-xs">PostgreSQL</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-500 flex items-center gap-1">
                     <HardDrive className="w-3.5 h-3.5" />
-                    Storage
+                    Audio Library
                   </span>
                   <span className="font-mono text-slate-700 text-xs">
-                    1.2 GB / 50 GB
+                    {audios.length} file{audios.length === 1 ? "" : "s"}
                   </span>
                 </div>
               </div>
@@ -371,24 +396,7 @@ export default async function SettingsPage() {
 
             {/* Database Maintenance */}
             <Card title="Data & Backup">
-              <div className="p-5 space-y-2">
-                <Button variant="outline" size="sm" className="w-full">
-                  <Download className="w-4 h-4" />
-                  Backup Database
-                </Button>
-                <Button variant="outline" size="sm" className="w-full">
-                  <Upload className="w-4 h-4" />
-                  Restore Database
-                </Button>
-                <Button variant="outline" size="sm" className="w-full">
-                  <Download className="w-4 h-4" />
-                  Export All Logs
-                </Button>
-                <Button variant="danger" size="sm" className="w-full">
-                  <Trash2 className="w-4 h-4" />
-                  Clear Old Logs
-                </Button>
-              </div>
+              <SettingsDataBackup />
             </Card>
 
             {/* About */}
@@ -425,7 +433,7 @@ export default async function SettingsPage() {
               </div>
             </Card>
           </div>
-        </div>
+        </form>
       </div>
     </>
   );
