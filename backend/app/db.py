@@ -72,6 +72,49 @@ async def get_default_audio():
         return await cur.fetchone()
 
 
+# ---------- audios (list / create / delete / default) ----------
+async def list_audios():
+    async with await get_conn() as conn:
+        cur = await conn.execute(
+            "SELECT * FROM audios ORDER BY is_default DESC, filename ASC"
+        )
+        return await cur.fetchall()
+
+
+async def create_audio_row(filename: str, original_name: str, file_path: str,
+                            mime_type: str | None, duration_seconds: float,
+                            file_size_bytes: int, is_default: bool = False):
+    async with await get_conn() as conn:
+        if is_default:
+            await conn.execute("UPDATE audios SET is_default = false")
+        cur = await conn.execute(
+            """INSERT INTO audios (filename, original_name, file_path, mime_type,
+               duration_seconds, file_size_bytes, is_default, created_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, now()) RETURNING *""",
+            (filename, original_name, file_path, mime_type, duration_seconds,
+             file_size_bytes, is_default),
+        )
+        row = await cur.fetchone()
+        await conn.commit()
+        return row
+
+
+async def delete_audio_row(audio_id: int):
+    async with await get_conn() as conn:
+        cur = await conn.execute("SELECT * FROM audios WHERE id = %s", (audio_id,))
+        row = await cur.fetchone()
+        await conn.execute("DELETE FROM audios WHERE id = %s", (audio_id,))
+        await conn.commit()
+        return row
+
+
+async def set_default_audio_row(audio_id: int):
+    async with await get_conn() as conn:
+        await conn.execute("UPDATE audios SET is_default = false")
+        await conn.execute("UPDATE audios SET is_default = true WHERE id = %s", (audio_id,))
+        await conn.commit()
+
+
 # ---------- history ----------
 async def create_history(schedule_id: int | None, audio_id: int | None, audio_name: str, triggered_by: str) -> int:
     async with await get_conn() as conn:
