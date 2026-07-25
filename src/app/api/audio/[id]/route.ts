@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8081";
+const BACKEND_URL = process.env.BACKEND_URL || "http://18.135.139.41:8081";
 
 export const dynamic = "force-dynamic";
 
