@@ -1,15 +1,26 @@
-const BACKEND_URL = process.env.BACKEND_URL || "http://18.135.139.41:8081";
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8081";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const res = await fetch(`${BACKEND_URL}/status`, { cache: "no-store" });
+    const res = await fetch(`${BACKEND_URL}/status`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
     const data = await res.json();
     return Response.json(data);
-  } catch {
+  } catch (err: any) {
+    console.error("Broadcast status fetch failed:", err);
     return Response.json(
-      { connected: false, inVoiceChat: false, broadcastActive: false, error: "backend unreachable" },
+      {
+        connected: false,
+        inVoiceChat: false,
+        broadcastActive: false,
+        error: "backend unreachable",
+        detail: err?.cause?.message || err?.message || String(err),
+        backendUrl: BACKEND_URL,
+      },
       { status: 200 }
     );
   }
@@ -28,19 +39,21 @@ export async function POST(req: Request) {
           audio_id: body.audioId ?? null,
           duration_minutes: body.durationMinutes ?? 60,
         }),
-         signal: AbortSignal.timeout(8000),   
+        signal: AbortSignal.timeout(8000),
       });
       const data = await res.json();
       return Response.json(data, { status: res.status });
     }
     if (action === "stop") {
-      const res = await fetch(`${BACKEND_URL}/broadcast/stop`, { method: "POST" });
-       signal: AbortSignal.timeout(8000),   
+      const res = await fetch(`${BACKEND_URL}/broadcast/stop`, {
+        method: "POST",
+        signal: AbortSignal.timeout(8000),
+      });
       const data = await res.json();
       return Response.json(data, { status: res.status });
     }
     return Response.json({ error: "unknown action" }, { status: 400 });
- } catch (err: any) {
+  } catch (err: any) {
     console.error("Broadcast backend fetch failed:", err);
     return Response.json(
       {
