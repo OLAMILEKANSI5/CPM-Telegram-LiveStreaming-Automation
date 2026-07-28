@@ -24,12 +24,14 @@ export async function POST(req: Request) {
     const res = await fetch(`${BACKEND_URL}/audio`, {
       method: "POST",
       body: formData,
+      signal: AbortSignal.timeout(15000),
     });
     const data = await res.json().catch(() => ({}));
     return Response.json(data, { status: res.status });
-  } catch {
+  } catch (err: any) {
+    console.error("Audio upload fetch failed:", err);
     return Response.json(
-      { error: "Could not reach broadcast backend. Is it running?" },
+      { error: "Could not reach broadcast backend. Is it running?", detail: err?.message || String(err) },
       { status: 502 }
     );
   }
