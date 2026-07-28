@@ -28,17 +28,27 @@ export async function POST(req: Request) {
           audio_id: body.audioId ?? null,
           duration_minutes: body.durationMinutes ?? 60,
         }),
+         signal: AbortSignal.timeout(8000),   
       });
       const data = await res.json();
       return Response.json(data, { status: res.status });
     }
     if (action === "stop") {
       const res = await fetch(`${BACKEND_URL}/broadcast/stop`, { method: "POST" });
+       signal: AbortSignal.timeout(8000),   
       const data = await res.json();
       return Response.json(data, { status: res.status });
     }
     return Response.json({ error: "unknown action" }, { status: 400 });
-  } catch {
-    return Response.json({ error: "backend unreachable" }, { status: 502 });
+ } catch (err: any) {
+    console.error("Broadcast backend fetch failed:", err);
+    return Response.json(
+      {
+        error: "backend unreachable",
+        detail: err?.cause?.message || err?.message || String(err),
+        backendUrl: BACKEND_URL,
+      },
+      { status: 502 }
+    );
   }
 }
